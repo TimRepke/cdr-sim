@@ -6,7 +6,7 @@ import { idx2ym } from './util';
 export class Environment {
   private stepIdx: number;
 
-  private actors: Record<ActorKey, Actor>;
+  public actors: Record<ActorKey, Actor>;
 
   private state: Record<ResourceKey, StateVariable>;
 
@@ -36,23 +36,53 @@ export class Environment {
       if (emits) {
         Object.entries(emits).forEach((entry) => {
           const [key, amounts] = entry;
-          this.state[key as ResourceKey].ledger[this.stepIdx].emitted += amounts[this.stepIdx] * (factor as number);
+          this.state[key as ResourceKey].logEmission(this.stepIdx, amounts[this.stepIdx] * (factor as number));
         });
       }
       if (consumes) {
         Object.entries(consumes).forEach((entry) => {
           const [key, amounts] = entry;
-          this.state[key as ResourceKey].ledger[this.stepIdx].consumed += amounts[this.stepIdx] * (factor as number);
+          this.state[key as ResourceKey].logConsumption(this.stepIdx, amounts[this.stepIdx] * (factor as number));
         });
       }
       if (occupies) {
         Object.entries(occupies).forEach((entry) => {
           const [key, amounts] = entry;
-          this.state[key as ResourceKey].ledger[this.stepIdx].occupied += amounts[this.stepIdx] * (factor as number);
+          this.state[key as ResourceKey].logOccupation(this.stepIdx, amounts[this.stepIdx] * (factor as number));
         });
       }
     });
 
     this.stepIdx += 1;
   }
+
+  logSpecial(event: SpecialEvent) {
+    const { consumes, emits, occupies } = event;
+    if (emits) {
+      Object.entries(emits).forEach((entry) => {
+        const [key, amount] = entry;
+        this.state[key as ResourceKey].logEmission(this.stepIdx, amount);
+      });
+    }
+    if (consumes) {
+      Object.entries(consumes).forEach((entry) => {
+        const [key, amount] = entry;
+        this.state[key as ResourceKey].logEmission(this.stepIdx, amount);
+      });
+    }
+    if (occupies) {
+      Object.entries(occupies).forEach((entry) => {
+        const [key, amount] = entry;
+        this.state[key as ResourceKey].logOccupation(this.stepIdx, amount);
+      });
+    }
+  }
+}
+
+export interface SpecialEvent {
+  name: string;
+  description: string;
+  consumes?: Partial<Record<ResourceKey, number>>;
+  emits?: Partial<Record<ResourceKey, number>>;
+  occupies?: Partial<Record<ResourceKey, number>>;
 }
