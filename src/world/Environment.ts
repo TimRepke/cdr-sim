@@ -1,47 +1,58 @@
-import { StateKey, State } from './State';
-import type { StateVariable } from './State';
-import { ActorKey, Actor } from './Actor.ts';
+import { ResourceKey, getFreshState, StateVariable } from './State';
+import { ActorKey, Actor, loadScenario, ScenarioCompressed } from './Actor';
+import { idx2ym } from './util';
 
-class Environment {
-  private isLoopStopped: boolean;
-
+// eslint-disable-next-line import/prefer-default-export
+export class Environment {
   private stepIdx: number;
-
-  public updateSpeed: number;
-
-  private state: Record<StateKey, StateVariable>;
 
   private actors: Record<ActorKey, Actor>;
 
-  private start: number = 2000;
+  private state: Record<ResourceKey, StateVariable>;
 
-  constructor(updateSpeed: number, scenarioData:) {
-    this.isLoopStopped = false;
-    this.updateSpeed = updateSpeed;
-    this.state = State;
-    this.actors = [new Actor({})];
+  constructor(scenario: ScenarioCompressed) {
+    this.stepIdx = 0;
+    this.state = getFreshState();
+    this.actors = loadScenario(scenario);
   }
 
-  get stepYearMonth(): [number, number] {
-    const yearOffset = Math.floor(this.stepIdx / 12);
-    const month = this.stepIdx % 12;
-    return [this.start + yearOffset, month + 1];
+  get currentStepIdx(): number {
+    return this.stepIdx;
+  }
+
+  get currentYearMonth(): [number, number] {
+    return idx2ym(this.stepIdx);
+  }
+
+  get currentState(): Record<ResourceKey, StateVariable> {
+    return this.state;
   }
 
   step() {
     Object.values(this.actors).forEach((actor) => {
-      Object.entries(actor.emits).forEach((entry) => {
-        const [key, amounts] = entry;
-        this.state[key]
-      });
+      const { consumes, emits, occupies } = actor;
+      let { factor } = actor;
+      if (factor === undefined) factor = 1;
+      if (emits) {
+        Object.entries(emits).forEach((entry) => {
+          const [key, amounts] = entry;
+          this.state[key as ResourceKey].ledger[this.stepIdx].emitted += amounts[this.stepIdx] * (factor as number);
+        });
+      }
+      if (consumes) {
+        Object.entries(consumes).forEach((entry) => {
+          const [key, amounts] = entry;
+          this.state[key as ResourceKey].ledger[this.stepIdx].consumed += amounts[this.stepIdx] * (factor as number);
+        });
+      }
+      if (occupies) {
+        Object.entries(occupies).forEach((entry) => {
+          const [key, amounts] = entry;
+          this.state[key as ResourceKey].ledger[this.stepIdx].occupied += amounts[this.stepIdx] * (factor as number);
+        });
+      }
     });
-  }
 
-  startLoop() {
-
-  }
-
-  stopLoop() {
-    this.isLoopStopped = true;
+    this.stepIdx += 1;
   }
 }
