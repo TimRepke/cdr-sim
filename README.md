@@ -16,8 +16,7 @@ investing in novel CDR like direct air capture (DAC), biochar, or BECCS.
 * Tim Repke (MCC Berlin)
 
 ## Background
-This project started in the context of the [Environmental Data, media, and the Humanities Hackathon](https://mhep.github.io/hackathon/).
-The goal is to invite a wide audience to learn about negative emissions technologies in a playful manner.
+This project started with the goal to invite a wide audience to learn about negative emissions technologies in a playful manner.
 Most notably, 
 * we have to do more than just plant a few trees (afforestation/reforestation),
 * we have to massively increase up growth of CDR deployment,
